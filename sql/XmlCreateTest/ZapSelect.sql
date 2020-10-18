@@ -15,4 +15,5 @@ SELECT zap_id
 	,"NOVOR"
 	,"VNOV_D"
 FROM reestr_export.zap
-where order_id = $1;
+where order_id = $1
+order by zap_id;

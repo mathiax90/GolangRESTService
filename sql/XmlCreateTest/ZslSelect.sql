@@ -22,4 +22,5 @@ SELECT z_sl_id
 	,"SUMP"
 	,"SANK_IT"
 FROM reestr_export.z_sl
-where order_id = $1;
+where order_id = $1
+order by zap_id;

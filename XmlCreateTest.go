@@ -97,8 +97,43 @@ type Z_SL struct {
 	OPLATA NullIntXml  `db:"OPLATA"`
 	SUMP NullFloatXml  `db:"SUMP"`
 	SANK_IT NullFloatXml  `db:"SANK_IT"`
+	SL []SL `xml:"SL"`
 }
 
+type SL struct {
+	XMLName xml.Name `xml:"SL"`
+	SlId string  `db:"sl_id" xml:"-"`
+	ZapId string  `db:"zap_id" xml:"-"` 
+	OrderId string  `db:"order_id" xml:"-"`
+	LPU_1 NullStringXml  `db:"LPU_1"`
+	PODR NullStringXml  `db:"PODR"`
+	PROFIL int64  `db:"PROFIL"`
+	PROFIL_K NullIntXml  `db:"PROFIL_K"`
+	DET int64  `db:"DET"`
+	P_CEL NullStringXml  `db:"P_CEL"`
+	NHISTORY string  `db:"NHISTORY"`
+	P_PER NullIntXml  `db:"P_PER"`
+	DATE_1 SimpleDate  `db:"DATE_1"`
+	DATE_2 SimpleDate  `db:"DATE_2"`
+	KD NullIntXml  `db:"KD"`
+	DS0 NullStringXml  `db:"DS0"`
+	DS1 string  `db:"DS1"`
+	DS2 NullStringXml  `db:"DS2"`
+	DS3 NullStringXml  `db:"DS3"`
+	C_ZAB NullIntXml  `db:"C_ZAB"`
+	DN NullIntXml  `db:"DN"`
+	CODE_MES1 NullStringXml  `db:"CODE_MES1"`
+	CODE_MES2 NullStringXml  `db:"CODE_MES2"`
+	REAB NullIntXml  `db:"REAB"`
+	PRVS int64  `db:"PRVS"`
+	VERS_SPEC string  `db:"VERS_SPEC"`
+	IDDOKT string  `db:"IDDOKT"`
+	ED_COL NullFloatXml  `db:"ED_COL"`
+	N_Z NullIntXml  `db:"N_Z"`
+	TARIF NullFloatXml  `db:"TARIF"`
+	SUM_M float64  `db:"SUM_M"`
+	COMENTSL NullStringXml  `db:"COMENTSL"`
+}
 
 func XmlCreateTest() {
 		
@@ -156,16 +191,52 @@ func XmlCreateTest() {
 		return
 	}
 
+	SlSelectSqlFile, err := os.Open("./sql/XmlCreateTest/SlSelect.sql")	
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer SlSelectSqlFile.Close()
+	byteSql, _ = ioutil.ReadAll(SlSelectSqlFile)
+	SlSelectSql := string(byteSql)
+
+	err = db.Select(&SLs,SlSelectSql,order_id)
+	if err != nil {
+		fmt.Printf("error while select reestr from db: %v\n", err)
+		return
+	}
+
+	SLs_temp := SLs
+
+	//assign sl to z_sl
+		for i:= 0;i<len(Z_SLs);i++{			
+			for sl_index, sl := range SLs_temp {
+				if Z_SLs[i].ZapId == sl.ZapId{
+					//zsl.SLs = append(zsl.SLs, SLs[0])		
+					Z_SLs[i].SL = append(Z_SLs[i].SL,sl)			
+					SLs_temp[sl_index] = SLs_temp[len(SLs_temp)-1] // Copy last element to index i.				
+					SLs_temp = SLs_temp[:len(SLs_temp)-1]   // Truncate slice.									
+					break;				
+				}
+			}	
+		}
+	
+	Z_SLs_temp := Z_SLs
 	//assign z_sl to zap
-	for _, zsl := range Z_SLs {
-		for _, zap := range ZAPs {
-			if zsl.ZapId == zap.ZapId{
-				zap.Z_SL = zsl
+	for i:= 0;i<len(ZAPs);i++{	
+		for zsl_index, zsl := range Z_SLs_temp {
+			if ZAPs[i].ZapId == zsl.ZapId{
+				ZAPs[i].Z_SL = zsl				
+				Z_SLs_temp[zsl_index] = Z_SLs_temp[len(Z_SLs_temp)-1] // Copy last element to index i.				
+				Z_SLs_temp= Z_SLs_temp[:len(Z_SLs_temp)-1]   // Truncate slice.				
+				break;				
 			}
 		}
 	}
+			
 
 
+	fmt.Println(Z_SLs[0].SL)
+	fmt.Println(ZAPs[0].Z_SL.SL)
 	ZL_LIST := ZL_LIST{}
 	ZL_LIST.SCHET = SCHET
 	ZL_LIST.ZAPs = ZAPs
@@ -175,7 +246,7 @@ func XmlCreateTest() {
 	if err != nil {
 		fmt.Printf("error: %v\n", err)
 	}
-
+	_ = output
 	os.Stdout.Write(output)
 }
 
