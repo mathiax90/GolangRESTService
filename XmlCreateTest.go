@@ -15,21 +15,22 @@ import (
 	_ "github.com/jackc/pgx/stdlib"
 	//"gopkg.in/guregu/null.v4"
 	//"encoding/xml"
-	"database/sql"
-	"time"
+	//"database/sql"
+	//"time"
 	"io/ioutil"
 	//"gopkg.in/guregu/null.v4"
 	"encoding/xml"
 )
-type Root struct {
-	Schet Schet
-	ZapCollection ZapCollection
+type ZL_LIST struct {
+	XMLName xml.Name `xml:"ZL_LIST"`
+	SCHET SCHET
+	ZAPs []ZAP	
 }
 
-type Schet struct {
-	XMLName   xml.Name `xml:"SCHET"`
+type SCHET struct {
+	XMLName xml.Name `xml:"SCHET"`
 	SchetId string  `db:"schet_id" xml:"-"`
-	OrderId sql.NullString  `db:"order_id" xml:"-"`
+	OrderId NullStringXml  `db:"order_id" xml:"-"`
 	VERSION string  `db:"VERSION"`
 	DATA SimpleDate  `db:"DATA"`
 	FILENAME string  `db:"FILENAME"`
@@ -39,8 +40,8 @@ type Schet struct {
 	YEAR int64  `db:"YEAR"`
 	MONTH int64  `db:"MONTH"`
 	NSCHET string  `db:"NSCHET"`
-	DSCHET time.Time  `db:"DSCHET"`
-	PLAT sql.NullString  `db:"PLAT"`
+	DSCHET SimpleDate  `db:"DSCHET"`
+	PLAT NullStringXml  `db:"PLAT"`
 	SUMMAV float64  `db:"SUMMAV"`
 	// COMENTS sql.NullString  `db:"COMENTS"`
 	// SUMMAP sql.NullInt64  `db:"SUMMAP"`
@@ -49,28 +50,53 @@ type Schet struct {
 	// SANK_EKMP sql.NullInt64  `db:"SANK_EKMP"`
 }
 
-type ZapCollection struct {
-	Zaps []Zap
-}
-
-type Zap struct {
-	ZapId string  `db:"zap_id"`
-	OrderId sql.NullString  `db:"order_id"`
+type ZAP struct {
+	XMLName xml.Name `xml:"ZAP"`
+	ZapId string  `db:"zap_id"  xml:"-"`
+	OrderId NullStringXml  `db:"order_id"  xml:"-"`
 	N_ZAP int64  `db:"N_ZAP"`
 	PR_NOV int64  `db:"PR_NOV"`
 	ID_PAC string  `db:"ID_PAC"`
 	VPOLIS int64  `db:"VPOLIS"`
-	SPOLIS sql.NullString  `db:"SPOLIS"`
+	SPOLIS NullStringXml  `db:"SPOLIS"`
 	NPOLIS string  `db:"NPOLIS"`
-	ST_OKATO sql.NullString  `db:"ST_OKATO"`
-	SMO sql.NullString  `db:"SMO"`
-	SMO_OGRN sql.NullString  `db:"SMO_OGRN"`
-	SMO_OK sql.NullString  `db:"SMO_OK"`
-	SMO_NAM sql.NullString  `db:"SMO_NAM"`
-	INV sql.NullInt64  `db:"INV"`
-	MSE sql.NullInt64  `db:"MSE"`
+	ST_OKATO NullStringXml  `db:"ST_OKATO"`
+	SMO NullStringXml  `db:"SMO"`
+	SMO_OGRN NullStringXml  `db:"SMO_OGRN"`
+	SMO_OK NullStringXml  `db:"SMO_OK"`
+	SMO_NAM NullStringXml  `db:"SMO_NAM"`
+	INV NullIntXml  `db:"INV"`
+	MSE NullIntXml  `db:"MSE"`
 	NOVOR string  `db:"NOVOR"`
-	VNOV_D sql.NullInt64  `db:"VNOV_D"`
+	VNOV_D NullIntXml  `db:"VNOV_D"`
+	Z_SL Z_SL
+}
+
+type Z_SL struct {
+	XMLName xml.Name `xml:"Z_SL"`
+	ZslId string  `db:"z_sl_id" xml:"-"`
+	ZapId string  `db:"zap_id" xml:"-"`
+	OrderId NullStringXml  `db:"order_id" xml:"-"`
+	IDCASE int64  `db:"IDCASE"`
+	USL_OK int64  `db:"USL_OK"`
+	VIDPOM int64  `db:"VIDPOM"`
+	FOR_POM int64  `db:"FOR_POM"`
+	NPR_MO NullStringXml  `db:"NPR_MO"`
+	NPR_DATE NullTimeXml  `db:"NPR_DATE"`
+	LPU string  `db:"LPU"`
+	DATE_Z_1 SimpleDate  `db:"DATE_Z_1"`
+	DATE_Z_2 SimpleDate  `db:"DATE_Z_2"`
+	KD_Z NullIntXml  `db:"KD_Z"`
+	VNOV_M NullIntXml  `db:"VNOV_M"`
+	RSLT int64  `db:"RSLT"`
+	ISHOD int64  `db:"ISHOD"`
+	OS_SLUCH NullIntXml  `db:"OS_SLUCH"`
+	VB_P NullIntXml  `db:"VB_P"`
+	IDSP int64  `db:"IDSP"`
+	SUMV NullFloatXml  `db:"SUMV"`
+	OPLATA NullIntXml  `db:"OPLATA"`
+	SUMP NullFloatXml  `db:"SUMP"`
+	SANK_IT NullFloatXml  `db:"SANK_IT"`
 }
 
 
@@ -81,7 +107,7 @@ func XmlCreateTest() {
 	order_id := "6424858d-1d3e-4e23-ae1b-78e65c1f3e19"
 
 	//schet
-	Schet := Schet{}
+	SCHET := SCHET{}
 	SchetSelectSqlFile, err := os.Open("./sql/XmlCreateTest/SchetSelect.sql")	
 	if err != nil {
 		fmt.Println(err)
@@ -90,7 +116,7 @@ func XmlCreateTest() {
 	byteSql, _ := ioutil.ReadAll(SchetSelectSqlFile)
 	SchetSelectSql := string(byteSql)
 
-	err = db.Get(&Schet,SchetSelectSql,order_id)
+	err = db.Get(&SCHET,SchetSelectSql,order_id)
 	if err != nil {
 		fmt.Printf("error while select reestr from db: %v\n", err)
 		return
@@ -98,10 +124,10 @@ func XmlCreateTest() {
 
 	//zaps
 
-	ZapCollection:= ZapCollection{}
-	Zaps := []Zap{}
-	ZapCollection.Zaps = Zaps
-
+	
+	ZAPs := []ZAP{}	
+	Z_SLs := []Z_SL{}
+	SLs := []SL{}
 	ZapSelectSqlFile, err := os.Open("./sql/XmlCreateTest/ZapSelect.sql")	
 	if err != nil {
 		fmt.Println(err)
@@ -110,28 +136,42 @@ func XmlCreateTest() {
 	byteSql, _ = ioutil.ReadAll(ZapSelectSqlFile)
 	ZapSelectSql := string(byteSql)
 
-	err = db.Select(&Zaps,ZapSelectSql,order_id)
+	err = db.Select(&ZAPs,ZapSelectSql,order_id)
 	if err != nil {
 		fmt.Printf("error while select reestr from db: %v\n", err)
 		return
 	}
 
-	fmt.Println(Zaps)
-	// for _, v := range ReestrCollection.Reestrs {
-	// 	fmt.Println(v)
-	// 	if !ZapCollection.Contains(v.ID_PAC){
-	// 		fmt.Println("")
-	// 	}
-		
-	// 	// if zaps
+	ZslSelectSqlFile, err := os.Open("./sql/XmlCreateTest/ZslSelect.sql")	
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer ZslSelectSqlFile.Close()
+	byteSql, _ = ioutil.ReadAll(ZslSelectSqlFile)
+	ZslSelectSql := string(byteSql)
 
-	Root := Root{}
-	Root.Schet = Schet
-	Root.ZapCollection = ZapCollection
+	err = db.Select(&Z_SLs,ZslSelectSql,order_id)
+	if err != nil {
+		fmt.Printf("error while select reestr from db: %v\n", err)
+		return
+	}
 
-	// 	break
-	// }
-	output, err := xml.MarshalIndent(Root, "  ", "    ")
+	//assign z_sl to zap
+	for _, zsl := range Z_SLs {
+		for _, zap := range ZAPs {
+			if zsl.ZapId == zap.ZapId{
+				zap.Z_SL = zsl
+			}
+		}
+	}
+
+
+	ZL_LIST := ZL_LIST{}
+	ZL_LIST.SCHET = SCHET
+	ZL_LIST.ZAPs = ZAPs
+
+
+	output, err := xml.MarshalIndent(ZL_LIST, "  ", "    ")
 	if err != nil {
 		fmt.Printf("error: %v\n", err)
 	}
