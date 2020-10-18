@@ -2,7 +2,7 @@ package main
 import (
     "encoding/xml"
     "gopkg.in/guregu/null.v4"
-    "fmt"
+    //"fmt"
     //"time"
 )
 
@@ -16,8 +16,8 @@ func (nullStringXml NullStringXml) MarshalXML(e *xml.Encoder, start xml.StartEle
     if nullStringXml.Valid == false {
         return nil        
     }
-
-    return e.EncodeElement(nullStringXml, start)
+    //fmt.Println(nullStringXml)
+    return e.EncodeElement(nullStringXml.String, start)
 }
 
 type NullIntXml struct {
@@ -30,7 +30,7 @@ func (nullIntXml NullIntXml) MarshalXML(e *xml.Encoder, start xml.StartElement) 
         return nil
     }
 
-    return e.EncodeElement(nullIntXml, start)
+    return e.EncodeElement(nullIntXml.Int64, start)
 }
 
 type NullTimeXml struct {
@@ -42,8 +42,19 @@ func (nullTimeXml NullTimeXml) MarshalXML(e *xml.Encoder, start xml.StartElement
     if nullTimeXml.Valid == false {
         return nil
     }
-    fmt.Println(nullTimeXml)
-    //var tempTime time.Time
-    //tempTime = nullTimeXml.Time.Time
+//    fmt.Println(nullTimeXml)
     return e.EncodeElement(nullTimeXml.Time.Time.Format("2006-01-02"), start)
+}
+
+type NullFloatXml struct {
+    null.Float
+} 
+
+// MarshalXML generate XML output for PrecsontructedInfo
+func (nullFloatXml NullFloatXml) MarshalXML(e *xml.Encoder, start xml.StartElement) (err error) {
+    if nullFloatXml.Valid == false {
+        return nil
+    }
+
+    return e.EncodeElement(nullFloatXml.Float64, start)
 }
