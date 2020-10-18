@@ -8,7 +8,7 @@ import (
 //"encoding/json"
 		
 	//"context"	
-	//"os"
+	"os"
 	//pgx "github.com/jackc/pgx/v4"	
 	//"github.com/jmoiron/sqlx"
 	//"github.com/joho/godotenv"
@@ -16,76 +16,137 @@ import (
 	//"gopkg.in/guregu/null.v4"
 	//"encoding/xml"
 	"database/sql"
-	//"time"
+	"time"
+	"io/ioutil"
 	//"gopkg.in/guregu/null.v4"
+	"encoding/xml"
 )
-
-type Reestr struct{
-	Id sql.NullString  `db:"id"`
-	Datein sql.NullTime  `db:"datein"`
-	Dateout sql.NullTime  `db:"dateout"`
-	Ds sql.NullString  `db:"ds"`
-	Codeusl sql.NullString  `db:"codeusl"`
-	Codemd sql.NullString  `db:"codemd"`
-	KolUsl sql.NullInt64  `db:"kol_usl"`
-	Idsluch sql.NullString  `db:"idsluch"`
-	Prvs sql.NullString  `db:"prvs"`
-	Otdel sql.NullString  `db:"otdel"`
-	Lpu sql.NullString  `db:"lpu"`
-	UslOk sql.NullString  `db:"usl_ok"`
-	Profil sql.NullString  `db:"profil"`
-	Ds1 sql.NullString  `db:"ds1"`
-	Rslt sql.NullString  `db:"rslt"`
-	Ishod sql.NullString  `db:"ishod"`
-	Nprmo sql.NullString  `db:"nprmo"`
-	PCel sql.NullString  `db:"p_cel"`
-	Nprdate sql.NullTime  `db:"nprdate"`
-	Idpac sql.NullString  `db:"idpac"`
-	Fam sql.NullString  `db:"fam"`
-	Nam sql.NullString  `db:"nam"`
-	Ot sql.NullString  `db:"ot"`
-	Dr sql.NullTime  `db:"dr"`
-	Npolis sql.NullString  `db:"npolis"`
-	Spolis sql.NullString  `db:"spolis"`
-	Smo sql.NullString  `db:"smo"`
-	Vpolis sql.NullString  `db:"vpolis"`
-	W sql.NullString  `db:"w"`
-	Iddokt sql.NullString  `db:"iddokt"`
-	IdSluch sql.NullString  `db:"id_sluch"`
-	Date1 sql.NullTime  `db:"date_1"`
-	Date2 sql.NullTime  `db:"date_2"`
-	Tarif sql.NullFloat64  `db:"tarif"`
-	Unit sql.NullBool  `db:"unit"`
-	NZub sql.NullInt64  `db:"n_zub"`
-	Koekp sql.NullString  `db:"koekp"`
-	Ksg sql.NullString  `db:"ksg"`
-	KZat sql.NullString  `db:"k_zat"`
-	Telephone sql.NullString  `db:"telephone"`
-	TypeDiagn sql.NullString  `db:"type_diagn"`
-	Det sql.NullInt64  `db:"det"`
-	VidVme sql.NullString  `db:"vid_vme"`
-	VidKsg sql.NullString  `db:"vid_ksg"`
-	VidKz sql.NullString  `db:"vid_kz"`
-	VidVmeUsl sql.NullString  `db:"vid_vme_usl"`
-	Lpu1 sql.NullString  `db:"lpu1"`
+type Root struct {
+	Schet Schet
+	ZapCollection ZapCollection
 }
+
+type Schet struct {
+	XMLName   xml.Name `xml:"SCHET"`
+	SchetId string  `db:"schet_id" xml:"-"`
+	OrderId sql.NullString  `db:"order_id" xml:"-"`
+	VERSION string  `db:"VERSION"`
+	DATA SimpleDate  `db:"DATA"`
+	FILENAME string  `db:"FILENAME"`
+	SD_Z int64  `db:"SD_Z"`
+	CODE int64  `db:"CODE"`
+	CODE_MO string  `db:"CODE_MO"`
+	YEAR int64  `db:"YEAR"`
+	MONTH int64  `db:"MONTH"`
+	NSCHET string  `db:"NSCHET"`
+	DSCHET time.Time  `db:"DSCHET"`
+	PLAT sql.NullString  `db:"PLAT"`
+	SUMMAV float64  `db:"SUMMAV"`
+	// COMENTS sql.NullString  `db:"COMENTS"`
+	// SUMMAP sql.NullInt64  `db:"SUMMAP"`
+	// SANK_MEK sql.NullInt64  `db:"SANK_MEK"`
+	// SANK_MEE sql.NullInt64  `db:"SANK_MEE"`
+	// SANK_EKMP sql.NullInt64  `db:"SANK_EKMP"`
+}
+
+type ZapCollection struct {
+	Zaps []Zap
+}
+
+type Zap struct {
+	ZapId string  `db:"zap_id"`
+	OrderId sql.NullString  `db:"order_id"`
+	N_ZAP int64  `db:"N_ZAP"`
+	PR_NOV int64  `db:"PR_NOV"`
+	ID_PAC string  `db:"ID_PAC"`
+	VPOLIS int64  `db:"VPOLIS"`
+	SPOLIS sql.NullString  `db:"SPOLIS"`
+	NPOLIS string  `db:"NPOLIS"`
+	ST_OKATO sql.NullString  `db:"ST_OKATO"`
+	SMO sql.NullString  `db:"SMO"`
+	SMO_OGRN sql.NullString  `db:"SMO_OGRN"`
+	SMO_OK sql.NullString  `db:"SMO_OK"`
+	SMO_NAM sql.NullString  `db:"SMO_NAM"`
+	INV sql.NullInt64  `db:"INV"`
+	MSE sql.NullInt64  `db:"MSE"`
+	NOVOR string  `db:"NOVOR"`
+	VNOV_D sql.NullInt64  `db:"VNOV_D"`
+}
+
 
 func XmlCreateTest() {
 		
 	fmt.Println("start")
-	var err error
-	reestr := []Reestr{}
-	err = db.Select(&reestr,"select id, datein, dateout, ds, codeusl, codemd, kol_usl, prvs, idsluch, otdel, lpu, usl_ok, profil, ds1, rslt, ishod, nprmo, p_cel, nprdate, idpac, fam, nam, ot, dr, npolis, spolis, smo, vpolis, w, iddokt, id_sluch, date_1, date_2, tarif, unit, n_zub, koekp, ksg, k_zat, telephone, type_diagn, det, vid_vme, vid_ksg, vid_kz, vid_vme_usl, lpu1 from reestr('2020-08-01','2020-08-31','032155',false)")
+	var err error	
+	order_id := "6424858d-1d3e-4e23-ae1b-78e65c1f3e19"
+
+	//schet
+	Schet := Schet{}
+	SchetSelectSqlFile, err := os.Open("./sql/XmlCreateTest/SchetSelect.sql")	
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer SchetSelectSqlFile.Close()
+	byteSql, _ := ioutil.ReadAll(SchetSelectSqlFile)
+	SchetSelectSql := string(byteSql)
+
+	err = db.Get(&Schet,SchetSelectSql,order_id)
 	if err != nil {
 		fmt.Printf("error while select reestr from db: %v\n", err)
 		return
-	}	
-	fmt.Println(reestr)
-	// output, err := xml.MarshalIndent(root, "  ", "    ")
-	// if err != nil {
-	// 	fmt.Printf("error: %v\n", err)
-	// }
+	}
 
-	// os.Stdout.Write(output)
+	//zaps
+
+	ZapCollection:= ZapCollection{}
+	Zaps := []Zap{}
+	ZapCollection.Zaps = Zaps
+
+	ZapSelectSqlFile, err := os.Open("./sql/XmlCreateTest/ZapSelect.sql")	
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer ZapSelectSqlFile.Close()
+	byteSql, _ = ioutil.ReadAll(ZapSelectSqlFile)
+	ZapSelectSql := string(byteSql)
+
+	err = db.Select(&Zaps,ZapSelectSql,order_id)
+	if err != nil {
+		fmt.Printf("error while select reestr from db: %v\n", err)
+		return
+	}
+
+	fmt.Println(Zaps)
+	// for _, v := range ReestrCollection.Reestrs {
+	// 	fmt.Println(v)
+	// 	if !ZapCollection.Contains(v.ID_PAC){
+	// 		fmt.Println("")
+	// 	}
+		
+	// 	// if zaps
+
+	Root := Root{}
+	Root.Schet = Schet
+	Root.ZapCollection = ZapCollection
+
+	// 	break
+	// }
+	output, err := xml.MarshalIndent(Root, "  ", "    ")
+	if err != nil {
+		fmt.Printf("error: %v\n", err)
+	}
+
+	os.Stdout.Write(output)
 }
 
+
+
+// MarshalXML generate XML output for PrecsontructedInfo
+// func (reestr Reestr) MarshalXML(e *xml.Encoder, start xml.StartElement) (err error) {
+// 	zap := []Zap{}
+// 	for i, v := range reestr.Row {
+		
+// 	}
+
+//     return e.EncodeElement(reestr, start)
+// }
