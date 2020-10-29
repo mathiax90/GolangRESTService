@@ -71,28 +71,42 @@ func createOrderHandler(w http.ResponseWriter, r *http.Request) {
 	}	
 
 	tx.Commit()
+	defer getReestrXml(response_order.OrderId)
+	//fmt.Println(response_order)
 
-	//get inserted values
-	orderid := response_order.OrderId
-	//генерировать XML
+	 if err = json.NewEncoder(w).Encode(response_order.OrderId); err != nil {
+		 fmt.Println(err)
+		 http.Error(w, "Error on struct encode to json.\n"+ err.Error(), http.StatusInternalServerError)	
+	}
+}
+
+func getReestrXml(order_id string) {
+	fmt.Println("start getReestrXml")
 	var xml_doc string
-	err = db.Get(&xml_doc,"select xml_doc from reestr_export_test('тестовый файл')")
+	var table_fill_ok bool
+	var err error
+
+	err = db.Get(&table_fill_ok,"select reestr_export.fn_fill_export_tables($1);",order_id)
 	if err != nil {
-		http.Error(w, "Error while get XML from SP.\n"+ err.Error(), http.StatusInternalServerError)	
+		fmt.Println("erorr while table fill" + err.Error())
 		return
-	}	
+	}
+
+	err = db.Get(&xml_doc,"select reestr_export.sp_get_reestr_xml($1)::text;",order_id)
+	if err != nil {
+		fmt.Println("erorr while sp_get_reestr_xml" + err.Error())
+		return
+	}
 
 	xml_doc = `<?xml version="1.0" encoding="windows-1251"?>` + xml_doc
 	//Запись в файл
-	file, err := os.Create("ReestrFileStorage/" + orderid +".xml")
+	file, err := os.Create("ReestrFileStorage/" + order_id +".xml")
      
     if err != nil{
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		fmt.Println("erorr while file create")
 		return	
 	}
 
-	
-	
 	defer file.Close()
 
 	var win1251Bytes bytes.Buffer
@@ -101,9 +115,6 @@ func createOrderHandler(w http.ResponseWriter, r *http.Request) {
 	win1251Transform.Close()
 	file.WriteString(win1251Bytes.String())
 
-	
- 	json.NewEncoder(w).Encode(response_order)	
-	return
 }
 
 // func CreateReestrFile_v3_2_sp(order Order) {
