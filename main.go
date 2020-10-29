@@ -61,6 +61,8 @@ func main() {
 	fmt.Println("service start")
 	router := mux.NewRouter()
 	router.HandleFunc("/orders/", createOrderHandler).Methods("POST")
+	router.HandleFunc("/orders/idpacs", getIdPacsHandler).Methods("GET")
+	
 	s := http.StripPrefix("/ReestrFileStorage/", http.FileServer(http.Dir("./ReestrFileStorage/")))
 	router.PathPrefix("/ReestrFileStorage/").Handler(s)
     log.Fatal(http.ListenAndServe(":8000", router))

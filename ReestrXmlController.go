@@ -14,7 +14,7 @@ import (
 	//"github.com/jmoiron/sqlx"
 	//"database/sql"
 	"time"
-	"gopkg.in/guregu/null.v4"
+	//"gopkg.in/guregu/null.v4"
 	"net/url"
 	"strings"
 	"golang.org/x/text/encoding/charmap"
@@ -22,17 +22,23 @@ import (
 	"bytes"
 )
 
+
+type ID_PAC struct
+{
+	IdPac string `db:"ID_PAC"`
+}
+
 type Order struct
 {
 	OrderId string `db:"order_id"`
 	DateStart SimpleDate `db:"date_start"`
 	DateEnd SimpleDate  `db:"date_end"`
 	Mo string `db:"mo"`
-	IsDone null.Bool `db:"is_done"`
-	Version string `db:"version"`
-	ExportType int `db:"export_type"` //0 через ХП, 1 через код
-	HasError null.Bool `db:"has_error"`
-	ErrorText null.String `db:"error_text"`
+	State int `db:"state"`
+	// Version string `db:"version"`
+	// ExportType int `db:"export_type"` //0 через ХП, 1 через код
+	// HasError null.Bool `db:"has_error"`
+	// ErrorText null.String `db:"error_text"`
 }
 
 
@@ -62,7 +68,7 @@ func createOrderHandler(w http.ResponseWriter, r *http.Request) {
 	tx := db.MustBegin()		
 	
 	response_order := Order{}
-	err = tx.Get(&response_order,"INSERT INTO reestr_export.\"order\" ( date_start, date_end, mo, is_done ) VALUES ( $1, $2, $3, $4) RETURNING order_id", order.DateStart.Time , order.DateEnd.Time, order.Mo, order.IsDone)		
+	err = tx.Get(&response_order,"INSERT INTO reestr_export.\"order\" ( date_start, date_end, mo, state ) VALUES ( $1, $2, $3, $4) RETURNING order_id", order.DateStart.Time , order.DateEnd.Time, order.Mo, 0)		
 
 	if err != nil {
 		tx.Rollback()
@@ -89,12 +95,14 @@ func getReestrXml(order_id string) {
 	err = db.Get(&table_fill_ok,"select reestr_export.fn_fill_export_tables($1);",order_id)
 	if err != nil {
 		fmt.Println("erorr while table fill" + err.Error())
+		_, err = db.Exec(`update reestr_export."order" set state = 2 where order_id = $1`,order_id)
 		return
 	}
 
 	err = db.Get(&xml_doc,"select reestr_export.sp_get_reestr_xml($1)::text;",order_id)
 	if err != nil {
 		fmt.Println("erorr while sp_get_reestr_xml" + err.Error())
+		_, err = db.Exec(`update reestr_export."order" set state = 2 where order_id = $1`,order_id)
 		return
 	}
 
@@ -115,36 +123,8 @@ func getReestrXml(order_id string) {
 	win1251Transform.Close()
 	file.WriteString(win1251Bytes.String())
 
+	_, err = db.Exec(`update reestr_export."order" set state = 1 where order_id = $1`,order_id)
 }
-
-// func CreateReestrFile_v3_2_sp(order Order) {
-// 	fmt.Println("CreateReestrFile_v3_2_sp");
-
-// 	//start transaction
-// 	tx := db.MustBegin()		
-
-// 	var err error
-// 	var xml_doc string
-// 	err = tx.Get(&xml_doc,"select xml_doc from reestr_export_test('imya faila')")
-// 	if err != nil {
-// 		fmt.Println("Has error: ", err);
-// 		tx.Rollback()
-// 	}
-// 	//write to file here
-
-// 	//xml ok, update 
-// 	_, err = db.NamedExec(`update "order" set is_done = false where order_id = :order_id`, 
-//         map[string]interface{}{
-//             "order_id": order.OrderId,           
-// 	})
-// 	if err != nil {
-// 		fmt.Println("Has error on update row: ", err);
-// 		tx.Rollback()
-// 	}
-
-// 	tx.Commit()	
-// 	return
-// }
 
 func (order *Order) validate() url.Values {
 	errs := url.Values{}
@@ -169,3 +149,34 @@ func (order *Order) validate() url.Values {
 	}
 	return errs
 }
+
+func getIdPacsHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	var err error
+	fmt.Println("getIdPacs")
+	var order_id string
+	if len(r.URL.RawQuery) > 0 {
+		order_id = r.URL.Query().Get("order_id")
+		//fmt.Printf(str1)
+		if order_id == "" {
+			http.Error(w, "order_id is not defined\n", http.StatusBadRequest)
+			return
+		}
+	}
+
+	fmt.Println("order_id: " + order_id)
+	var ID_PACs []ID_PAC
+	
+	err = db.Select(&ID_PACs,"select * from reestr_export.sp_get_id_pacs($1)", order_id)		
+
+	if err != nil {		
+		http.Error(w, "Error while  reestr_export.sp_get_id_pacs("+order_id+").\n"+ err.Error(), http.StatusInternalServerError)	
+		return
+	}	
+	
+	if err = json.NewEncoder(w).Encode(ID_PACs); err != nil {
+		http.Error(w, "Error while Unmarshal ID_PACs\n"+ err.Error(), http.StatusInternalServerError)	
+	}
+	
+}
+	
