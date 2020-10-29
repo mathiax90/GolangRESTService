@@ -55,8 +55,8 @@ func main() {
     }	
 	defer db.Close()
 
-	XmlCreateTest()
-	os.Exit(1)
+	//XmlCreateTest()
+	//os.Exit(1)
 	
 	fmt.Println("service start")
 	router := mux.NewRouter()
