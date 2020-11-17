@@ -86,6 +86,37 @@ func createOrderHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func getOrderHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	var err error
+	fmt.Println("get order status")
+	var order_id string
+	if len(r.URL.RawQuery) > 0 {
+		order_id = r.URL.Query().Get("order_id")
+		//fmt.Printf(str1)
+		if order_id == "" {
+			http.Error(w, "order_id is not defined\n", http.StatusBadRequest)
+			return
+		}
+	}
+
+	fmt.Println("order_id: " + order_id)
+	order:= Order{}
+	err = db.Get(&order,`select order_id, date_start, date_end, mo, state from reestr_export."order" where order_id = $1`, order_id)
+	
+	fmt.Println(order)
+
+	if err != nil {		
+		http.Error(w, "Error while get order info ("+order_id+").\n"+ err.Error(), http.StatusInternalServerError)	
+		return
+	}	
+	
+	if err = json.NewEncoder(w).Encode(order); err != nil {
+		http.Error(w, "Error while Unmarshal order\n"+ err.Error(), http.StatusInternalServerError)	
+	}
+	
+}
+
 func getReestrXml(order_id string) {
 	fmt.Println("start getReestrXml")
 	var xml_doc string
