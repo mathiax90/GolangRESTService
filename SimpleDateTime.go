@@ -2,9 +2,9 @@ package main
 import (
 	"time"
 	"strings"
-	//"encoding/json"
-	//"fmt"
-    "bytes"
+	"encoding/json"
+	// "fmt"
+    // "bytes"
     "encoding/xml"
     "errors"
     "database/sql/driver"
@@ -14,10 +14,8 @@ type SimpleDate struct {
     Time time.Time    
 }
 
-func (simpleDate SimpleDate) MarshalJSON() ([]byte, error) {
-    var buf bytes.Buffer    
-    buf.WriteString(simpleDate.Time.Format("2006-01-02"))
-    return buf.Bytes(), nil
+func (simpleDate SimpleDate) MarshalJSON() ([]byte, error) {        
+    return json.Marshal(simpleDate.Time.Format("2006-01-02"))
 }
 
 func (simpleDate *SimpleDate)UnmarshalJSON(in []byte) error {   
